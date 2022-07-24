@@ -46,7 +46,7 @@ X_test_scaled = scaler.transform(X_test)
 # define the model
 #Experiment with deeper and wider networks
 model = Sequential()
-model.add(Dense(100, input_dim=9, activation='relu'))
+model.add(Dense(100, input_dim=12, activation='relu'))
 model.add(Dense(100, activation='relu'))
 model.add(Dense(100, activation='relu'))
 model.add(Dense(100, activation='tanh'))
