@@ -1,8 +1,5 @@
-"""
-Created on Thu Jul 14 21:57:57 2022
-@author: EBU KASIM
 
-"""
+import numpy as np
 import pandas as pd
 from pandas import read_csv
 from keras.models import Sequential
@@ -49,18 +46,19 @@ X_test_scaled = scaler.transform(X_test)
 # define the model
 #Experiment with deeper and wider networks
 model = Sequential()
-model.add(Dense(50, input_dim=9, activation='relu'))
-model.add(Dense(80, activation='tanh'))
-model.add(Dense(80, activation='tanh'))
-model.add(Dense(60, activation='relu'))
-model.add(Dense(50, activation='relu'))
+model.add(Dense(100, input_dim=9, activation='relu'))
+model.add(Dense(100, activation='relu'))
+model.add(Dense(100, activation='relu'))
+model.add(Dense(100, activation='tanh'))
+model.add(Dense(100, activation='relu'))
+model.add(Dense(100, activation='relu'))
 #Output layer
 model.add(Dense(2, activation='linear'))
 
 model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
 model.summary()
 
-history = model.fit(X_train_scaled, y_train, validation_split=0.3, epochs =100)
+history = model.fit(X_train_scaled, y_train, validation_split=0.2, epochs =200)
 
 from matplotlib import pyplot as plt
 #plot the training and validation accuracy and loss at each epoch
@@ -86,19 +84,54 @@ plt.ylabel('Accuracy')
 plt.legend()
 plt.show()
 
-##############################################
 ############################################
 #Predict on test data
 predictions = model.predict(X_test_scaled)
-print("Predicted values are: ", predictions)
-print("Real values are: ", y_test)
-mse_nn = mean_squared_error(y_test, predictions)
+predictions2 = model.predict(X_train_scaled)
+#print("Predicted values are: ", predictions)
+#print("Real values are: ", y_test)
+mse_nn = mean_squared_error(y_test, predictions)   #for test
 mae_nn = mean_absolute_error(y_test, predictions)
-r2 = r2_score(y_test, predictions)      #r2
+
+mse_nn2 = mean_squared_error(y_train, predictions2)    #for train
+mae_nn2 = mean_absolute_error(y_train, predictions2)
+
+r2_test = r2_score(y_test, predictions)      #r2 for test
+r2_train = r2_score(y_train, predictions2)      #r2 for train
+
 print('Mean squared error from NN: ', mse_nn)
 print('Mean absolute error from NN: ', mae_nn)
-print('R^2 of NN: ', r2)
-plt.scatter(y_test, predictions)
+
+print('Mean squared error of train from NN: ', mse_nn2)
+print('Mean absolute error of train from NN: ', mae_nn2)
+
+print('R^2 of NN for test: ', r2_test)
+print('R^2 of NN for train: ', r2_train)
+
+
+#plotting the predicted and tested values as point without line
+
+#plt.scatter(np.array(y_test).T[0], np.array(predictions).T[0])       #test torsion  vs predicted torsion
+#plt.scatter(np.array(y_test).T[1], np.array(predictions).T[1])       #test period  vs predicted period
+#plt.scatter(np.array(y_train).T[0], np.array(predictions2).T[0])      #train torsion  vs predicted torsion
+#plt.scatter(np.array(y_train).T[1], np.array(predictions2).T[1])      #train period  vs predicted period
+def plot_diff(y_true, y_pred, title=''):
+    plt.scatter(y_true, y_pred)
+    plt.title(title)
+    plt.xlabel('True Values')
+    plt.ylabel('Predictions')
+    plt.axis('equal')
+    plt.axis('square')
+    plt.xlim(plt.xlim())
+    plt.ylim(plt.ylim())
+    plt.plot([-100, 100], [-100, 100])
+    plt.show()
+
+plot_diff(np.array(y_test).T[0], np.array(predictions).T[0], title='torsion of test')
+plot_diff(np.array(y_train).T[0], np.array(predictions2).T[0], title='torsion of train')
+
+plot_diff(np.array(y_test).T[1], np.array(predictions).T[1], title='period of test')
+plot_diff(np.array(y_train).T[1], np.array(predictions2).T[1], title='period of train')
 
 #Comparison with other models..
 #Neural network - from the current code
@@ -132,6 +165,7 @@ sns.heatmap(df.corr(), annot=True)     #correlation matrix
 #visualizor = PredictionError(lr_model).fit(X_train_scaled, y_train)
 #visualizor.score(X_test_scaled, y_test)
 #visualizor.poof
+
 ############################################################
 ### Decision tree
 tree = DecisionTreeRegressor()
@@ -146,12 +180,15 @@ print('Mean absolute error using decision tree: ', mae_dt)
 #Random forest.
 #Increase number of tress and see the effect
 from sklearn.ensemble import RandomForestRegressor
-model = RandomForestRegressor(n_estimators = 30, random_state=30)
+model = RandomForestRegressor(n_estimators = 100, random_state=30)
 model.fit(X_train_scaled, y_train)
 model.score
 y_pred_RF = model.predict(X_test_scaled)
 model.score(X_test_scaled,y_test)   # R2 (coeffiecent of determination)
-plt.scatter(y_test, y_pred_RF)
+#plt.scatter(y_test, y_pred_RF)
+plot_diff(np.array(y_test).T[0], np.array(y_pred_RF).T[0], title='test torsion of RF')
+plot_diff(np.array(y_test).T[1], np.array(y_pred_RF).T[1], title='test period of RF')
+
 mse_RF = mean_squared_error(y_test, y_pred_RF)
 mae_RF = mean_absolute_error(y_test, y_pred_RF)
 print('Mean squared error using Random Forest: ', mse_RF)
@@ -161,5 +198,5 @@ print('Mean absolute error Using Random Forest: ', mae_RF)
 #Feature ranking...
 import pandas as pd
 feature_list = list(x.columns)
-feature_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=False)
+feature_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=True)
 print(feature_imp)
