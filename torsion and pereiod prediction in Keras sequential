@@ -11,11 +11,13 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import seaborn as sns
+
+
 # load data and arrange into Pandas dataframe
-df = read_csv("data9.csv", delim_whitespace=False, header=1)
+df = read_csv("data13.csv", delim_whitespace=False, header=None)
 
 feature_names = ['CRM', 'A_target', 'A_orthog', 'ht/h1', 'a/b', 'min/max', '#_storys', 
-                 '#_spans', 'Aw/Ap', 'torsion', 'period']
+                 '#_spans', 'Aw/Ap', 'H', 'beam_sec','col_sec', 'torsion', 'period']
 
 
 df.columns = feature_names
@@ -23,15 +25,13 @@ print(df.head())
 
 print(df.describe())
 
-
-#Split into features and target (Price)
+#Split into features and target 
 x = df[['CRM', 'A_target', 'A_orthog', 'ht/h1', 'a/b', 'min/max', '#_storys', 
-                 '#_spans', 'Aw/Ap']]
+                 '#_spans', 'Aw/Ap', 'H', 'beam_sec','col_sec']]
 
 y = df[['torsion','period']]
 
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state = 20)
-
 
 #Scale data, otherwise model will fail.
 #Standardize features by removing the mean and scaling to unit variance
@@ -41,7 +41,6 @@ scaler.fit(X_train)
 
 X_train_scaled = scaler.transform(X_train)
 X_test_scaled = scaler.transform(X_test)
-
 
 # define the model
 #Experiment with deeper and wider networks
@@ -108,13 +107,6 @@ print('Mean absolute error of train from NN: ', mae_nn2)
 print('R^2 of NN for test: ', r2_test)
 print('R^2 of NN for train: ', r2_train)
 
-
-#plotting the predicted and tested values as point without line
-
-#plt.scatter(np.array(y_test).T[0], np.array(predictions).T[0])       #test torsion  vs predicted torsion
-#plt.scatter(np.array(y_test).T[1], np.array(predictions).T[1])       #test period  vs predicted period
-#plt.scatter(np.array(y_train).T[0], np.array(predictions2).T[0])      #train torsion  vs predicted torsion
-#plt.scatter(np.array(y_train).T[1], np.array(predictions2).T[1])      #train period  vs predicted period
 def plot_diff(y_true, y_pred, title=''):
     plt.scatter(y_true, y_pred)
     plt.title(title)
@@ -129,6 +121,14 @@ def plot_diff(y_true, y_pred, title=''):
 
 plot_diff(np.array(y_test).T[0], np.array(predictions).T[0], title='torsion of test')
 plot_diff(np.array(y_train).T[0], np.array(predictions2).T[0], title='torsion of train')
+
+#plotting the predicted and tested values as point without line
+
+#plt.scatter(np.array(y_test).T[0], np.array(predictions).T[0])       #test torsion  vs predicted torsion
+#plt.scatter(np.array(y_test).T[1], np.array(predictions).T[1])       #test period  vs predicted period
+#plt.scatter(np.array(y_train).T[0], np.array(predictions2).T[0])      #train torsion  vs predicted torsion
+#plt.scatter(np.array(y_train).T[1], np.array(predictions2).T[1])      #train period  vs predicted period
+
 
 plot_diff(np.array(y_test).T[1], np.array(predictions).T[1], title='period of test')
 plot_diff(np.array(y_train).T[1], np.array(predictions2).T[1], title='period of train')
@@ -166,6 +166,8 @@ sns.heatmap(df.corr(), annot=True)     #correlation matrix
 #visualizor.score(X_test_scaled, y_test)
 #visualizor.poof
 
+
+
 ############################################################
 ### Decision tree
 tree = DecisionTreeRegressor()
@@ -173,8 +175,11 @@ tree.fit(X_train_scaled, y_train)
 y_pred_tree = tree.predict(X_test_scaled)
 mse_dt = mean_squared_error(y_test, y_pred_tree)
 mae_dt = mean_absolute_error(y_test, y_pred_tree)
+r2_tree = r2_score(y_test, y_pred_tree)
 print('Mean squared error using decision tree: ', mse_dt)
 print('Mean absolute error using decision tree: ', mae_dt)
+print('R^2 of tree: ', r2_tree)
+
 
 ##############################################
 #Random forest.
@@ -191,9 +196,10 @@ plot_diff(np.array(y_test).T[1], np.array(y_pred_RF).T[1], title='test period of
 
 mse_RF = mean_squared_error(y_test, y_pred_RF)
 mae_RF = mean_absolute_error(y_test, y_pred_RF)
+r2_RF = r2_score(y_test, y_pred_RF)
 print('Mean squared error using Random Forest: ', mse_RF)
 print('Mean absolute error Using Random Forest: ', mae_RF)
-
+print('R^2 of RF: ', r2_RF)
 
 #Feature ranking...
 import pandas as pd
